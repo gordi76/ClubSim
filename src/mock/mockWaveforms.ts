@@ -13,7 +13,7 @@ function seededRandom(seed: number) {
   };
 }
 
-const clamp = (value: number) => Math.max(5, Math.min(100, value));
+const clamp = (value: number) => Math.max(2, Math.min(100, value));
 
 export function createMockWaveform(seed: number, length: number, sections: Section[]) {
   const random = seededRandom(seed);
@@ -22,15 +22,22 @@ export function createMockWaveform(seed: number, length: number, sections: Secti
     const position = index / Math.max(length - 1, 1);
     const section =
       sections.find(({ end }) => position <= end) ?? sections[sections.length - 1];
-    const kick = index % 8 === 0 ? 22 : index % 4 === 0 ? 10 : 0;
-    const phrase = Math.sin(index * 0.17) * 9 + Math.sin(index * 0.047) * 7;
-    const transient = random() > 0.86 ? random() * 28 : 0;
-    const energy = section.energy + phrase + transient;
+    const samplesPerBeat = 8;
+    const beat = Math.floor(index / samplesPerBeat);
+    const beatPhase = index % samplesPerBeat;
+    const kickEnvelope = Math.exp(-beatPhase * 0.72);
+    const offbeatEnvelope = Math.exp(-Math.abs(beatPhase - 4) * 0.9);
+    const clapEnvelope = beat % 4 === 1 || beat % 4 === 3
+      ? Math.exp(-Math.abs(beatPhase - 1) * 0.8)
+      : 0;
+    const phrase = Math.sin(position * Math.PI * 18) * 5 + Math.sin(index * 0.071) * 4;
+    const transient = random() > 0.91 ? 12 + random() * 22 : 0;
+    const energy = section.energy + phrase;
 
     return {
-      low: clamp(energy * section.bass + kick + random() * 16),
-      mid: clamp(energy * 0.78 + random() * 24),
-      high: clamp(energy * 0.55 + random() * 30),
+      low: clamp(energy * section.bass * 0.68 + kickEnvelope * 46 + random() * 9),
+      mid: clamp(energy * 0.62 + clapEnvelope * 30 + transient * 0.55 + random() * 13),
+      high: clamp(energy * 0.42 + offbeatEnvelope * 34 + transient + random() * 19),
     };
   });
 }

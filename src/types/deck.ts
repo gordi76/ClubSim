@@ -2,6 +2,10 @@ export type DeckId = 1 | 2;
 
 export type DisplayMode = "phase" | "stacked";
 
+export type DeckSource = "mock" | "rekordbox";
+
+export type ConnectionStatus = "mock" | "connecting" | "waiting" | "live" | "error";
+
 export type WaveformSample = { low: number; mid: number; high: number };
 
 export type CuePoint = {
@@ -22,6 +26,9 @@ export type DeckState = {
   key: string;
   progress: number;
   beatInBar: 1 | 2 | 3 | 4;
+  beatPhase: number;
+  isPlaying: boolean;
+  barsToNextCue: number;
   phaseOffset: number;
   waveform: WaveformSample[];
   overview: WaveformSample[];
@@ -31,4 +38,8 @@ export type DeckState = {
 export type DeckSnapshot = {
   decks: Record<DeckId, DeckState>;
   initialMasterDeck: DeckId;
+  masterDeck: DeckId;
+  source: DeckSource;
+  connectionStatus: ConnectionStatus;
+  connectionMessage: string;
 };

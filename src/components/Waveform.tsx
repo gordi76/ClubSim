@@ -8,51 +8,41 @@ type WaveformProps = {
   playhead?: number;
 };
 
-function mirrorPath(
+function barPath(
   samples: WaveformSample[],
   value: (sample: WaveformSample, index: number) => number,
   scale: number,
 ) {
   const lastIndex = Math.max(samples.length - 1, 1);
-  const top = samples.map((sample, index) => {
+  return samples.map((sample, index) => {
     const x = (index / lastIndex) * 1000;
-    const y = 50 - value(sample, index) * scale;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  const bottom = [...samples].reverse().map((sample, reverseIndex) => {
-    const index = samples.length - 1 - reverseIndex;
-    const x = (index / lastIndex) * 1000;
-    const y = 50 + value(sample, index) * scale;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-
-  return `M ${top.join(" L ")} L ${bottom.join(" L ")} Z`;
+    const height = Math.max(0.8, value(sample, index) * scale);
+    return `M ${x.toFixed(2)} ${(50 - height).toFixed(2)} V ${(50 + height).toFixed(2)}`;
+  }).join(" ");
 }
 
 export function Waveform({
   samples,
   compact = false,
   palette = "player",
-  playhead = 38,
+  playhead = 50,
 }: WaveformProps) {
   const clipId = useId().replace(/:/g, "");
-  const pulse = (index: number) =>
-    index % 8 === 0 ? 1 : index % 4 === 0 ? 0.78 : index % 2 === 0 ? 0.6 : 0.43;
-  const outerPath = mirrorPath(
+  const columnWidth = Math.max(1.4, (1000 / Math.max(samples.length, 1)) * 0.68);
+  const outerPath = barPath(
     samples,
-    (sample, index) =>
-      Math.max(sample.high, sample.mid * 0.9, sample.low * 0.82) * pulse(index),
+    (sample) => Math.max(sample.low, sample.mid * 0.94, sample.high * 0.86),
     0.48,
   );
-  const midPath = mirrorPath(
+  const midPath = barPath(
     samples,
-    (sample, index) => sample.mid * Math.min(1, pulse(index) + 0.12),
-    0.34,
+    (sample) => Math.max(sample.mid, sample.high * 0.72),
+    0.32,
   );
-  const corePath = mirrorPath(
+  const corePath = barPath(
     samples,
-    (sample, index) => sample.low * Math.min(1, pulse(index) + 0.22),
-    0.17,
+    (sample) => sample.high,
+    0.16,
   );
 
   return (
@@ -73,14 +63,14 @@ export function Waveform({
             <rect width={playhead * 10} height="100" />
           </clipPath>
         </defs>
-        <path className="wave-band wave-band--outer" d={outerPath} />
-        <path className="wave-band wave-band--middle" d={midPath} />
-        <path className="wave-band wave-band--core" d={corePath} />
+        <path className="wave-band wave-band--outer" d={outerPath} strokeWidth={columnWidth} />
+        <path className="wave-band wave-band--middle" d={midPath} strokeWidth={columnWidth} />
+        <path className="wave-band wave-band--core" d={corePath} strokeWidth={columnWidth} />
         {palette === "player" && (
           <g className="wave-band--played" clipPath={`url(#${clipId})`}>
-            <path className="wave-band wave-band--outer" d={outerPath} />
-            <path className="wave-band wave-band--middle" d={midPath} />
-            <path className="wave-band wave-band--core" d={corePath} />
+            <path className="wave-band wave-band--outer" d={outerPath} strokeWidth={columnWidth} />
+            <path className="wave-band wave-band--middle" d={midPath} strokeWidth={columnWidth} />
+            <path className="wave-band wave-band--core" d={corePath} strokeWidth={columnWidth} />
           </g>
         )}
       </svg>

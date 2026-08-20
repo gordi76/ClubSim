@@ -1,12 +1,15 @@
 import { useMemo } from "react";
 import type { CuePoint, WaveformSample } from "../types/deck";
 
-function areaPath(samples: WaveformSample[]) {
+function areaPath(
+  samples: WaveformSample[],
+  value: (sample: WaveformSample) => number,
+  scale: number,
+) {
   const lastIndex = Math.max(samples.length - 1, 1);
   const points = samples.map((sample, index) => {
     const x = (index / lastIndex) * 1000;
-    const pulse = index % 8 === 0 ? 1 : index % 4 === 0 ? 0.86 : index % 2 === 0 ? 0.72 : 0.58;
-    const y = 92 - Math.max(sample.low, sample.mid, sample.high) * pulse * 0.72;
+    const y = 92 - value(sample) * scale;
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   });
   return `M 0,92 L ${points.join(" L ")} L 1000,92 Z`;
@@ -21,13 +24,18 @@ export function OverviewWaveform({
   progress: number;
   cues: CuePoint[];
 }) {
-  const path = useMemo(() => areaPath(samples), [samples]);
+  const paths = useMemo(() => ({
+    low: areaPath(samples, (sample) => sample.low, 0.8),
+    mid: areaPath(samples, (sample) => sample.mid, 0.57),
+    high: areaPath(samples, (sample) => sample.high, 0.32),
+  }), [samples]);
 
   return (
     <div className="cdj-overview" aria-label={`Track progress ${Math.round(progress * 100)} percent`}>
       <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
-        <path className="cdj-overview__base" d={path} />
-        <path className="cdj-overview__energy" d={path} />
+        <path className="cdj-overview__low" d={paths.low} />
+        <path className="cdj-overview__mid" d={paths.mid} />
+        <path className="cdj-overview__high" d={paths.high} />
       </svg>
       <div className="cdj-overview__played" style={{ width: `${progress * 100}%` }} />
       <div className="cdj-overview__cursor" style={{ left: `${progress * 100}%` }}><span /></div>

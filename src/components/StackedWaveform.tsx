@@ -1,20 +1,14 @@
 import type { DeckState } from "../types/deck";
+import { BarsReadout } from "./BarsReadout";
 import { Waveform } from "./Waveform";
 
 export function StackedWaveform({ deck, masterTrack }: { deck: DeckState; masterTrack: DeckState }) {
   return (
     <div className="cdj-stacked">
-      <div className="cdj-bars-left">
-        <div className="cdj-bars-left__row cdj-bars-left__row--master">
-          <strong>{masterTrack.id}</strong><span>02.3<small>Bars</small></span>
-        </div>
-        <div className="cdj-bars-left__row cdj-bars-left__row--player">
-          <i /><span>12.3<small>Bars</small></span>
-        </div>
-      </div>
+      <BarsReadout deck={deck} masterTrack={masterTrack} />
       <div className="cdj-stacked__waves">
-        <Waveform samples={masterTrack.waveform} compact palette="master" />
-        <Waveform samples={deck.waveform} palette="player" />
+        <Waveform samples={masterTrack.waveform} compact palette="master" playhead={50} />
+        <Waveform samples={deck.waveform} palette="player" playhead={50} />
       </div>
     </div>
   );
