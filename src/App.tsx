@@ -1,49 +1,32 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import { Deck } from "./components/Deck";
+import { mockDeckProvider } from "./mock/mockDeckProvider";
+import type { DeckId } from "./types/deck";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const [{ decks, initialMasterDeck }] = useState(() => mockDeckProvider.getSnapshot());
+  const [masterDeck, setMasterDeck] = useState<DeckId>(initialMasterDeck);
+  const masterTrack = decks[masterDeck];
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <main className="app">
+      <header className="app__topbar">
+        <div>
+          <div className="app__brand"><span>CLUB</span>SIM</div>
+          <div className="app__subtitle">DUAL PLAYER · PRACTICE DISPLAY</div>
+        </div>
+        <div className="mock-controls">
+          <span>MASTER PLAYER</span>
+          <button className={masterDeck === 1 ? "active" : ""} onClick={() => setMasterDeck(1)}>1</button>
+          <button className={masterDeck === 2 ? "active" : ""} onClick={() => setMasterDeck(2)}>2</button>
+        </div>
+      </header>
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className="decks">
+        <Deck deck={decks[1]} masterDeck={masterDeck} masterTrack={masterTrack} />
+        <Deck deck={decks[2]} masterDeck={masterDeck} masterTrack={masterTrack} />
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
     </main>
   );
 }
